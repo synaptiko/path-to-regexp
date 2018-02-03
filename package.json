@@ -2,7 +2,7 @@
   "name": "path-to-regexp",
   "description": "Express style path to RegExp utility",
   "version": "2.1.0",
-  "main": "index.js",
+  "main": "index.mjs",
   "typings": "index.d.ts",
   "files": [
     "index.js",
@@ -23,7 +23,7 @@
   ],
   "component": {
     "scripts": {
-      "path-to-regexp": "index.js"
+      "path-to-regexp": "index.mjs"
     }
   },
   "license": "MIT",

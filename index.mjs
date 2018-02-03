@@ -1,24 +1,15 @@
 /**
- * Expose `pathToRegexp`.
- */
-module.exports = pathToRegexp
-module.exports.parse = parse
-module.exports.compile = compile
-module.exports.tokensToFunction = tokensToFunction
-module.exports.tokensToRegExp = tokensToRegExp
-
-/**
  * Default configs.
  */
-var DEFAULT_DELIMITER = '/'
-var DEFAULT_DELIMITERS = './'
+const DEFAULT_DELIMITER = '/'
+const DEFAULT_DELIMITERS = './'
 
 /**
  * The main path matching regexp utility.
  *
  * @type {RegExp}
  */
-var PATH_REGEXP = new RegExp([
+const PATH_REGEXP = new RegExp([
   // Match escaped characters that would otherwise appear in future matches.
   // This allows the user to escape special characters that won't transform.
   '(\\\\.)',
@@ -37,20 +28,20 @@ var PATH_REGEXP = new RegExp([
  * @param  {Object=} options
  * @return {!Array}
  */
-function parse (str, options) {
-  var tokens = []
-  var key = 0
-  var index = 0
-  var path = ''
-  var defaultDelimiter = (options && options.delimiter) || DEFAULT_DELIMITER
-  var delimiters = (options && options.delimiters) || DEFAULT_DELIMITERS
-  var pathEscaped = false
-  var res
+export function parse (str, options) {
+  const tokens = []
+  let key = 0
+  let index = 0
+  let path = ''
+  const defaultDelimiter = (options && options.delimiter) || DEFAULT_DELIMITER
+  const delimiters = (options && options.delimiters) || DEFAULT_DELIMITERS
+  let pathEscaped = false
+  let res
 
   while ((res = PATH_REGEXP.exec(str)) !== null) {
-    var m = res[0]
-    var escaped = res[1]
-    var offset = res.index
+    const m = res[0]
+    const escaped = res[1]
+    const offset = res.index
     path += str.slice(index, offset)
     index = offset + m.length
 
@@ -61,15 +52,15 @@ function parse (str, options) {
       continue
     }
 
-    var prev = ''
-    var next = str[index]
-    var name = res[2]
-    var capture = res[3]
-    var group = res[4]
-    var modifier = res[5]
+    let prev = ''
+    const next = str[index]
+    const name = res[2]
+    const capture = res[3]
+    const group = res[4]
+    const modifier = res[5]
 
     if (!pathEscaped && path.length) {
-      var k = path.length - 1
+      const k = path.length - 1
 
       if (delimiters.indexOf(path[k]) > -1) {
         prev = path[k]
@@ -84,19 +75,19 @@ function parse (str, options) {
       pathEscaped = false
     }
 
-    var partial = prev !== '' && next !== undefined && next !== prev
-    var repeat = modifier === '+' || modifier === '*'
-    var optional = modifier === '?' || modifier === '*'
-    var delimiter = prev || defaultDelimiter
-    var pattern = capture || group
+    const partial = prev !== '' && next !== undefined && next !== prev
+    const repeat = modifier === '+' || modifier === '*'
+    const optional = modifier === '?' || modifier === '*'
+    const delimiter = prev || defaultDelimiter
+    const pattern = capture || group
 
     tokens.push({
       name: name || key++,
       prefix: prev,
-      delimiter: delimiter,
-      optional: optional,
-      repeat: repeat,
-      partial: partial,
+      delimiter,
+      optional,
+      repeat,
+      partial,
       pattern: pattern ? escapeGroup(pattern) : '[^' + escapeString(delimiter) + ']+?'
     })
   }
@@ -116,38 +107,38 @@ function parse (str, options) {
  * @param  {Object=}            options
  * @return {!function(Object=, Object=)}
  */
-function compile (str, options) {
+export function compile (str, options) {
   return tokensToFunction(parse(str, options))
 }
 
 /**
  * Expose a method for transforming tokens into the path function.
  */
-function tokensToFunction (tokens) {
+export function tokensToFunction (tokens) {
   // Compile all the tokens into regexps.
-  var matches = new Array(tokens.length)
+  const matches = new Array(tokens.length)
 
   // Compile all the patterns before compilation.
-  for (var i = 0; i < tokens.length; i++) {
+  for (let i = 0; i < tokens.length; i++) {
     if (typeof tokens[i] === 'object') {
       matches[i] = new RegExp('^(?:' + tokens[i].pattern + ')$')
     }
   }
 
   return function (data, options) {
-    var path = ''
-    var encode = (options && options.encode) || encodeURIComponent
+    let path = ''
+    const encode = (options && options.encode) || encodeURIComponent
 
-    for (var i = 0; i < tokens.length; i++) {
-      var token = tokens[i]
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
 
       if (typeof token === 'string') {
         path += token
         continue
       }
 
-      var value = data ? data[token.name] : undefined
-      var segment
+      const value = data ? data[token.name] : undefined
+      let segment
 
       if (Array.isArray(value)) {
         if (!token.repeat) {
@@ -160,7 +151,7 @@ function tokensToFunction (tokens) {
           throw new TypeError('Expected "' + token.name + '" to not be empty')
         }
 
-        for (var j = 0; j < value.length; j++) {
+        for (let j = 0; j < value.length; j++) {
           segment = encode(value[j])
 
           if (!matches[i].test(segment)) {
@@ -239,10 +230,10 @@ function regexpToRegexp (path, keys) {
   if (!keys) return path
 
   // Use a negative lookahead to match only capturing groups.
-  var groups = path.source.match(/\((?!\?)/g)
+  const groups = path.source.match(/\((?!\?)/g)
 
   if (groups) {
-    for (var i = 0; i < groups.length; i++) {
+    for (let i = 0; i < groups.length; i++) {
       keys.push({
         name: i,
         prefix: null,
@@ -267,9 +258,9 @@ function regexpToRegexp (path, keys) {
  * @return {!RegExp}
  */
 function arrayToRegexp (path, keys, options) {
-  var parts = []
+  const parts = []
 
-  for (var i = 0; i < path.length; i++) {
+  for (let i = 0; i < path.length; i++) {
     parts.push(pathToRegexp(path[i], keys, options).source)
   }
 
@@ -296,27 +287,27 @@ function stringToRegexp (path, keys, options) {
  * @param  {Object=} options
  * @return {!RegExp}
  */
-function tokensToRegExp (tokens, keys, options) {
+export function tokensToRegExp (tokens, keys, options) {
   options = options || {}
 
-  var strict = options.strict
-  var end = options.end !== false
-  var delimiter = escapeString(options.delimiter || DEFAULT_DELIMITER)
-  var delimiters = options.delimiters || DEFAULT_DELIMITERS
-  var endsWith = [].concat(options.endsWith || []).map(escapeString).concat('$').join('|')
-  var route = ''
-  var isEndDelimited = false
+  const strict = options.strict
+  const end = options.end !== false
+  const delimiter = escapeString(options.delimiter || DEFAULT_DELIMITER)
+  const delimiters = options.delimiters || DEFAULT_DELIMITERS
+  const endsWith = [].concat(options.endsWith || []).map(escapeString).concat('$').join('|')
+  let route = ''
+  let isEndDelimited = false
 
   // Iterate over the tokens and create our regexp string.
-  for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i]
 
     if (typeof token === 'string') {
       route += escapeString(token)
       isEndDelimited = i === tokens.length - 1 && delimiters.indexOf(token[token.length - 1]) > -1
     } else {
-      var prefix = escapeString(token.prefix)
-      var capture = token.repeat
+      const prefix = escapeString(token.prefix)
+      const capture = token.repeat
         ? '(?:' + token.pattern + ')(?:' + prefix + '(?:' + token.pattern + '))*'
         : token.pattern
 
@@ -358,7 +349,7 @@ function tokensToRegExp (tokens, keys, options) {
  * @param  {Object=}               options
  * @return {!RegExp}
  */
-function pathToRegexp (path, keys, options) {
+export default function pathToRegexp (path, keys, options) {
   if (path instanceof RegExp) {
     return regexpToRegexp(path, keys)
   }
